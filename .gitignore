@@ -1,0 +1,5 @@
+bin/**
+!bin/.hold
+
+obj/**
+!obj/.hold
