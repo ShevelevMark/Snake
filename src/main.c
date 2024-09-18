@@ -11,8 +11,9 @@ int main() {
         printf("Can't start the game\n");
         return 1;
     }
-
+#ifdef _DEBUG
     unsigned frame_cnt = 0;
+#endif
     while (!snake_quit(snake_context)) {
 #ifdef _DEBUG
         printf("Frame %u\n", ++frame_cnt);
