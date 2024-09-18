@@ -2,6 +2,7 @@
 #include <snake_context.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 void* snake_make_context(unsigned row_size, unsigned col_size) {
     void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_cell_t) * row_size * col_size);
