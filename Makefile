@@ -1,8 +1,9 @@
 CC:=gcc
 SRC_DIR:=./src
+INC_DIR:=./inc
 BIN_DIR:=./bin
 OBJ_DIR:=./obj
-CFLAGS:=-std=c11 -O2 -Wall
+CFLAGS:=-std=c11 -O2 -Wall -I $(INC_DIR)
 
 SRC:=$(wildcard $(SRC_DIR)/*.c)
 OBJ:=$(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
