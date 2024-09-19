@@ -202,6 +202,9 @@ void snake_delete_context(void *context) {
     free(context);
 }
 
+/**
+ * Основная функция обработки событий
+ * **/
 void snake_key_process(int key, void *snake_context) {
     snake_context_t *context_ptr = (snake_context_t *)snake_context;
     if (key < 0 || key > 255 || NULL == key_action_map[key]) return;
