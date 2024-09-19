@@ -4,12 +4,17 @@
 #include <stdbool.h>
 
 typedef enum snake_cell {EMPTY = 0, HEAD, TAIL} snake_cell_t;
+typedef enum snake_direction {STOP = 0, UP = 1, RIGHT = 2, DOWN = 3, LEFT = 4} snake_direction_t;
+
+typedef struct snake_vector {
+    int row, col;
+} snake_vector_t;
 
 struct snake_tail;
 
 typedef struct snake_head {
     unsigned row_pos, col_pos;
-    int row_move, col_move;
+    snake_direction_t dir;
     struct snake_tail *tail;
 } snake_head_t;
 

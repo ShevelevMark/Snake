@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+static snake_vector_t directions_vec[5] = { {0, 0}, {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
+
 static void clear_field(snake_cell_t *begin, snake_cell_t *end) {
     for (snake_cell_t *it = begin; it != end; ++it)
         *it = EMPTY;
@@ -27,7 +29,7 @@ static void swap_pos(unsigned *a, unsigned *b) {
 
 static void move_snake(snake_head_t *head) {
     unsigned prev_row = head->row_pos, prev_col = head->col_pos;
-    head->row_pos += head->row_move; head->col_pos += head->col_move;
+    head->row_pos += directions_vec[head->dir].row; head->col_pos += directions_vec[head->dir].col;
     snake_tail_t *tail = head->tail;
 
     while (NULL != tail) {
@@ -43,7 +45,7 @@ static int snake_grow(snake_head_t *head) {
         return -1;
 
     unsigned prev_row = head->row_pos, prev_col = head->col_pos;
-    head->row_pos += head->row_move; head->col_pos += head->col_move;
+    head->row_pos += directions_vec[head->dir].row; head->col_pos += directions_vec[head->dir].col;
     new_neck->tail = head->tail;
     head->tail = new_neck;
     new_neck->row_pos = prev_row;
@@ -75,8 +77,7 @@ void* snake_make_context(unsigned row_size, unsigned col_size) {
 
         context_ptr->head->col_pos = context_ptr->col_size / 2;
         context_ptr->head->row_pos = context_ptr->row_size / 2;
-        context_ptr->head->col_move = 1;
-        context_ptr->head->row_move = 0;
+        context_ptr->head->dir = STOP;
         context_ptr->head->tail = NULL;
 
         clear_field(context_ptr->field, context_ptr->field + row_size * col_size);
@@ -113,8 +114,7 @@ void snake_key_process(int key, void *snake_context) {
         case 150: // ц 
         case 230: // Ц 
         {
-            context_ptr->head->row_move = -1;
-            context_ptr->head->col_move = 0;
+            context_ptr->head->dir = UP; 
             break;
         }
 
@@ -124,8 +124,7 @@ void snake_key_process(int key, void *snake_context) {
         case 130: // В
         case 162: // в
         {
-            context_ptr->head->row_move = 0;
-            context_ptr->head->col_move = 1;
+            context_ptr->head->dir = RIGHT;
             break;
         }
 
@@ -135,8 +134,7 @@ void snake_key_process(int key, void *snake_context) {
         case 155: // Ы
         case 235: // ы
         {
-            context_ptr->head->row_move = 1;
-            context_ptr->head->col_move = 0;
+            context_ptr->head->dir = DOWN; 
             break;
         }
 
@@ -146,8 +144,7 @@ void snake_key_process(int key, void *snake_context) {
         case 148: // Ф
         case 228: // ф
         {
-            context_ptr->head->row_move = 0;
-            context_ptr->head->col_move = -1;
+            context_ptr->head->dir = LEFT;
             break;
         }
     }
