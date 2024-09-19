@@ -52,6 +52,15 @@ static int snake_grow(snake_head_t *head) {
     return 0;
 }
 
+static void delete_tail(snake_head_t *head) {
+    snake_tail_t *tail = head->tail;
+    while (NULL != tail) {
+        snake_tail_t *tmp = tail->tail;
+        free(tail);
+        tail = tmp;
+    }
+}
+
 void* snake_make_context(unsigned row_size, unsigned col_size) {
     void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_cell_t) * row_size * col_size);
     if (NULL != context_memory) {
@@ -77,7 +86,7 @@ void* snake_make_context(unsigned row_size, unsigned col_size) {
 }
 
 void snake_delete_context(void *context) {
-    // delete_tail(((snake_context_t*)context)->head);
+    delete_tail(((snake_context_t*)context)->head);
     free(context);
 }
 
