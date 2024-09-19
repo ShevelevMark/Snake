@@ -98,6 +98,18 @@ void snake_key_process(int key, void *snake_context) {
             break;
         }    
 #endif
+        // UP
+        case 87:  // W
+        case 119: // w
+        case 150: // ц // extended code, encoding dependent!!!
+        case 230: // Ц // extended code, encoding dependent!!!
+        {
+            context_ptr->head->row_move = -1;
+            context_ptr->head->col_move = 0;
+            break;
+        }
+
+
     }
 }
 
