@@ -8,6 +8,11 @@ CFLAGS:=-std=c11 -O2 -Wall -I $(INC_DIR)
 SRC:=$(wildcard $(SRC_DIR)/*.c)
 OBJ:=$(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
 
+debug: CFLAGS +=-g -D _DEBUG
+
+debug: build
+release: build
+
 build: $(OBJ)
 	$(CC) $(OBJ) -o $(BIN_DIR)/snake $(LFLAGS)
 
