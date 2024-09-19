@@ -37,6 +37,21 @@ static void move_snake(snake_head_t *head) {
     }
 }
 
+static int snake_grow(snake_head_t *head) {
+    snake_tail_t *new_neck = (snake_tail_t *)malloc(sizeof(snake_tail_t));
+    if (NULL == new_neck)
+        return -1;
+
+    unsigned prev_row = head->row_pos, prev_col = head->col_pos;
+    head->row_pos += head->row_move; head->col_pos += head->col_move;
+    new_neck->tail = head->tail;
+    head->tail = new_neck;
+    new_neck->row_pos = prev_row;
+    new_neck->col_pos = prev_col;
+
+    return 0;
+}
+
 void* snake_make_context(unsigned row_size, unsigned col_size) {
     void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_cell_t) * row_size * col_size);
     if (NULL != context_memory) {
@@ -62,6 +77,7 @@ void* snake_make_context(unsigned row_size, unsigned col_size) {
 }
 
 void snake_delete_context(void *context) {
+    // delete_tail(((snake_context_t*)context)->head);
     free(context);
 }
 
@@ -73,7 +89,14 @@ void snake_key_process(int key, void *snake_context) {
             break;
         }
 #ifdef _DEBUG
-        
+        case 71:  // G
+        case 103: // g
+        case 143: // П // extended code, encoding dependent!!!
+        case 175: // п // extended code, encoding dependent!!!
+        {
+            snake_grow(context_ptr->head);
+            break;
+        }    
 #endif
     }
 }
