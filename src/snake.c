@@ -91,8 +91,8 @@ void snake_key_process(int key, void *snake_context) {
 #ifdef _DEBUG
         case 71:  // G
         case 103: // g
-        case 143: // П // extended code, encoding dependent!!!
-        case 175: // п // extended code, encoding dependent!!!
+        case 143: // П 
+        case 175: // п 
         {
             snake_grow(context_ptr->head);
             break;
@@ -101,15 +101,46 @@ void snake_key_process(int key, void *snake_context) {
         // UP
         case 87:  // W
         case 119: // w
-        case 150: // ц // extended code, encoding dependent!!!
-        case 230: // Ц // extended code, encoding dependent!!!
+        case 150: // ц 
+        case 230: // Ц 
         {
             context_ptr->head->row_move = -1;
             context_ptr->head->col_move = 0;
             break;
         }
 
+        // RIGHT
+        case 68:  // D
+        case 100: // d
+        case 130: // В
+        case 162: // в
+        {
+            context_ptr->head->row_move = 0;
+            context_ptr->head->col_move = 1;
+            break;
+        }
 
+        // DOWN
+        case 83:  // S
+        case 115: // s
+        case 155: // Ы
+        case 235: // ы
+        {
+            context_ptr->head->row_move = 1;
+            context_ptr->head->col_move = 0;
+            break;
+        }
+
+        // LEFT
+        case 65:  // A
+        case 97:  // a
+        case 148: // Ф
+        case 228: // ф
+        {
+            context_ptr->head->row_move = 0;
+            context_ptr->head->col_move = -1;
+            break;
+        }
     }
 }
 
