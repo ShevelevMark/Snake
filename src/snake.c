@@ -67,8 +67,15 @@ void snake_delete_context(void *context) {
 
 void snake_key_process(int key, void *snake_context) {
     snake_context_t *context_ptr = (snake_context_t *)snake_context;
-    if (27 == key)
-        context_ptr->is_quit = true;
+    switch(key) {
+        case 27: { // esc
+            context_ptr->is_quit = true;
+            break;
+        }
+#ifdef _DEBUG
+        
+#endif
+    }
 }
 
 void snake_draw(void *snake_context) {
