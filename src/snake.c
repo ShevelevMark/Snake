@@ -136,9 +136,25 @@ static void swap_pos(unsigned *a, unsigned *b) {
     *b = tmp;
 }
 
-static void move_snake(snake_head_t *head) {
+static void move_snake(snake_context_t *context_ptr) {
+    snake_head_t *head = context_ptr->head;
     unsigned prev_row = head->row_pos, prev_col = head->col_pos;
-    head->row_pos += directions_vec[head->dir].row; head->col_pos += directions_vec[head->dir].col;
+    
+    if (head->row_pos == 0 && directions_vec[head->dir].row < 0)
+        head->row_pos = context_ptr->row_size - 1;
+    else if (head->row_pos == context_ptr->row_size - 1 && directions_vec[head->dir].row > 0)
+        head->row_pos = 0;
+    else 
+        head->row_pos += directions_vec[head->dir].row;
+
+    if (head->col_pos == 0 && directions_vec[head->dir].col < 0)
+        head->col_pos = context_ptr->col_size - 1;
+    else if (head->col_pos == context_ptr->col_size - 1 && directions_vec[head->dir].col > 0)
+        head->col_pos = 0;
+    else
+        head->col_pos += directions_vec[head->dir].col;
+    
+
     snake_tail_t *tail = head->tail;
 
     while (NULL != tail) {
@@ -228,7 +244,7 @@ void snake_draw(void *snake_context) {
 
 void snake_advance(void *snake_context) {
     snake_context_t *context_ptr = (snake_context_t *)snake_context;
-    move_snake(context_ptr->head);
+    move_snake(context_ptr);
     clear_field(context_ptr->field, context_ptr->field + context_ptr->row_size * context_ptr->col_size);
     put_snake(context_ptr->field, context_ptr->col_size, context_ptr->head); 
 }
