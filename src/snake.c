@@ -4,6 +4,115 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+/**
+ * Тип указателя на функцию для отклика действием на нажатие клавиши
+ * **/
+typedef void (*snake_action_t) (snake_context_t *snake_context);
+
+/**
+ * В этом массиве храним соответствие между кодом символа и
+ * действием, которое должно за этим последовать
+ * **/
+static snake_action_t key_action_map[256];
+
+/**
+ * Функция проверки допустимого направления
+ * **/
+bool check_direction(snake_context_t *snake_context, snake_direction_t dir) {
+    /**
+     * Если змейка стоит или мы хотим её остановить, то это 
+     * можно сделать для любого направления.
+     * Если мы пытаемся установить то же самое направление,
+     * в котором уже движется змейка, то это можно сделать.
+     */
+    if (STOP == dir || STOP == snake_context->head->dir || dir == snake_context->head->dir) return true;
+
+    /**
+     * Тип направления определён следующим образом в snake_context.h
+     * typedef enum snake_direction {STOP = 0, UP = 1, RIGHT = 2, DOWN = 3, LEFT = 4} snake_direction_t;
+     * Если чётность устанавливаемого направления не совпадает с чётностью текущего, то оно разрешено
+     */
+    if (dir % 2 != snake_context->head->dir % 2) return true;
+
+    /* в остальных случая неверное направление */
+    return false;
+}
+
+/**
+ * Функции действия, которые меняют направление движение
+ * змейки
+ * **/
+static void on_move_up(snake_context_t *snake_context) {
+    if (!check_direction(snake_context, UP)) return;
+    snake_context->head->dir = UP;
+}
+
+static void on_move_right(snake_context_t *snake_context) {
+    if (!check_direction(snake_context, RIGHT)) return;
+    snake_context->head->dir = RIGHT;
+}
+
+static void on_move_down(snake_context_t *snake_context) {
+    if (!check_direction(snake_context, DOWN)) return;
+    snake_context->head->dir = DOWN;
+}
+
+static void on_move_left(snake_context_t *snake_context) {
+    if (!check_direction(snake_context, LEFT)) return;
+    snake_context->head->dir = LEFT;
+}
+
+/**
+ * Функция действия для остановки работы программы
+ * **/
+static void on_esc(snake_context_t *snake_context) {
+    snake_context->is_quit = true;
+}
+
+/**
+ * Декларация функции увеличения размера змейки,
+ * может быть неудачной, так как выделяется новая память
+ * **/
+static int snake_grow(snake_head_t *head);
+
+/**
+ * Функция действия для увеличения размера змейки
+ * **/
+static void on_snake_grow(snake_context_t *snake_context) {
+    snake_context->errcode = snake_grow(snake_context->head);
+}
+
+/**
+ * Функция для инициализации таблицы код-действие
+ * **/
+static void snake_key_action_map_init() {
+    /**
+     * Предварительно инициализируем все коды в NULL
+     * Означает, что для этих кодов нет отображения в действие
+     * **/
+    for (unsigned idx = 0; idx != 256; ++idx)
+        key_action_map[idx] = NULL;
+
+    /**
+     * Заполняем таблицу для тех кодов, для которых действие определено
+     * **/
+    // esc
+    key_action_map[27] = on_esc;
+    // W                 // w                  // Ц                  // ц
+    key_action_map[87] = key_action_map[119] = key_action_map[150] = key_action_map[230] = on_move_up;
+    // D                 // d                  // В                  // в
+    key_action_map[68] = key_action_map[100] = key_action_map[130] = key_action_map[162] = on_move_right;
+    // S                 // s                  // Ы                  // ы
+    key_action_map[83] = key_action_map[115] = key_action_map[155] = key_action_map[235] = on_move_down;
+    // A                 // a                 // Ф                   // ф 
+    key_action_map[65] = key_action_map[97]  = key_action_map[148] = key_action_map[228] = on_move_left;
+#ifdef _DEBUG
+    // при сборке в режиме отладки можно увеличивать размер змейки нажатием клавиши без еды
+    // G                 // g                 // П                   // п 
+    key_action_map[71] = key_action_map[103] = key_action_map[143] = key_action_map[175] = on_snake_grow;
+#endif
+}
+
 static snake_vector_t directions_vec[5] = { {0, 0}, {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
 
 static void clear_field(snake_cell_t *begin, snake_cell_t *end) {
@@ -82,6 +191,8 @@ void* snake_make_context(unsigned row_size, unsigned col_size) {
 
         clear_field(context_ptr->field, context_ptr->field + row_size * col_size);
         put_snake(context_ptr->field, context_ptr->col_size, context_ptr->head);
+
+        snake_key_action_map_init();
     }
     return context_memory;
 }
@@ -91,63 +202,13 @@ void snake_delete_context(void *context) {
     free(context);
 }
 
+/**
+ * Основная функция обработки событий
+ * **/
 void snake_key_process(int key, void *snake_context) {
     snake_context_t *context_ptr = (snake_context_t *)snake_context;
-    switch(key) {
-        case 27: { // esc
-            context_ptr->is_quit = true;
-            break;
-        }
-#ifdef _DEBUG
-        case 71:  // G
-        case 103: // g
-        case 143: // П 
-        case 175: // п 
-        {
-            snake_grow(context_ptr->head);
-            break;
-        }    
-#endif
-        // UP
-        case 87:  // W
-        case 119: // w
-        case 150: // ц 
-        case 230: // Ц 
-        {
-            context_ptr->head->dir = UP; 
-            break;
-        }
-
-        // RIGHT
-        case 68:  // D
-        case 100: // d
-        case 130: // В
-        case 162: // в
-        {
-            context_ptr->head->dir = RIGHT;
-            break;
-        }
-
-        // DOWN
-        case 83:  // S
-        case 115: // s
-        case 155: // Ы
-        case 235: // ы
-        {
-            context_ptr->head->dir = DOWN; 
-            break;
-        }
-
-        // LEFT
-        case 65:  // A
-        case 97:  // a
-        case 148: // Ф
-        case 228: // ф
-        {
-            context_ptr->head->dir = LEFT;
-            break;
-        }
-    }
+    if (key < 0 || key > 255 || NULL == key_action_map[key]) return;
+    key_action_map[key](context_ptr);
 }
 
 void snake_draw(void *snake_context) {
