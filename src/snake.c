@@ -206,6 +206,12 @@ static void random_food(snake_context_t *context_ptr) {
     context_ptr->food->row = rand() % context_ptr->row_size;
 }
 
+static bool check_food(snake_context_t *context_ptr) {
+    return 
+        context_ptr->head->col_pos == context_ptr->food->col 
+        && context_ptr->head->row_pos == context_ptr->food->row;
+}
+
 void* snake_make_context(unsigned row_size, unsigned col_size, double st, double initial_speed, double level_up, unsigned random_seed) {
     void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_food_t) + sizeof(snake_cell_t) * row_size * col_size);
     if (NULL != context_memory) {
@@ -277,6 +283,13 @@ void snake_advance(void *snake_context, double st) {
 
     if (!context_ptr->is_paused) {
         move_snake(context_ptr);
+        if (check_food(context_ptr)) {
+            ++context_ptr->level;
+            context_ptr->speed *= context_ptr->level_up;
+            snake_grow(context_ptr);
+            random_food(context_ptr); 
+        }
+        
         clear_field(context_ptr->field, context_ptr->field + context_ptr->row_size * context_ptr->col_size);
         put_snake(context_ptr->field, context_ptr->col_size, context_ptr->head);
         put_food(context_ptr);
