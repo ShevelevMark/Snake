@@ -130,6 +130,10 @@ static void put_snake(snake_cell_t *field, unsigned col_size, snake_head_t *head
     }
 }
 
+static void put_food(snake_context_t *context_ptr) {
+    context_ptr->field[context_ptr->food->row * context_ptr->col_size + context_ptr->food->col] = FOOD;
+}
+
 static void swap_pos(unsigned *a, unsigned *b) {
     unsigned tmp = *a;
     *a = *b;
@@ -192,8 +196,18 @@ static void delete_tail(snake_head_t *head) {
     }
 }
 
-void* snake_make_context(unsigned row_size, unsigned col_size, double st, double initial_speed, double level_up) {
-    void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_cell_t) * row_size * col_size);
+
+static void random_init(unsigned seed) {
+    srand(seed);
+}
+
+static void random_food(snake_context_t *context_ptr) {
+    context_ptr->food->col = rand() % context_ptr->col_size;
+    context_ptr->food->row = rand() % context_ptr->row_size;
+}
+
+void* snake_make_context(unsigned row_size, unsigned col_size, double st, double initial_speed, double level_up, unsigned random_seed) {
+    void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_food_t) + sizeof(snake_cell_t) * row_size * col_size);
     if (NULL != context_memory) {
         snake_context_t *context_ptr = (snake_context_t *)context_memory;
         context_ptr->row_size   = row_size;
@@ -202,7 +216,8 @@ void* snake_make_context(unsigned row_size, unsigned col_size, double st, double
         context_ptr->is_paused  = false;
         context_ptr->is_quit    = false;
         context_ptr->head       = (snake_head_t *)((unsigned char*)context_memory + sizeof(snake_context_t));
-        context_ptr->field      = (snake_cell_t *)((unsigned char*)context_memory + sizeof(snake_context_t) + sizeof(snake_head_t));
+        context_ptr->food       = (snake_food_t *)((unsigned char*)context_memory + sizeof(snake_context_t) + sizeof(snake_head_t));
+        context_ptr->field      = (snake_cell_t *)((unsigned char*)context_memory + sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_food_t));
         context_ptr->last_st    = st;
         context_ptr->speed      = initial_speed;
         context_ptr->level_up   = level_up;
@@ -212,11 +227,14 @@ void* snake_make_context(unsigned row_size, unsigned col_size, double st, double
         context_ptr->head->row_pos = context_ptr->row_size / 2;
         context_ptr->head->dir = STOP;
         context_ptr->head->tail = NULL;
-
+        
+        snake_key_action_map_init();
+        random_init(random_seed);
+        random_food(context_ptr);
+        
         clear_field(context_ptr->field, context_ptr->field + row_size * col_size);
         put_snake(context_ptr->field, context_ptr->col_size, context_ptr->head);
-
-        snake_key_action_map_init();
+        put_food(context_ptr);
     }
     return context_memory;
 }
@@ -243,6 +261,7 @@ void snake_draw(void *snake_context) {
                 case EMPTY: printf("."); break;
                 case HEAD: printf("@"); break;
                 case TAIL: printf("*"); break;
+                case FOOD: printf("$"); break;
             }
             printf(" ");
         }
@@ -260,6 +279,7 @@ void snake_advance(void *snake_context, double st) {
         move_snake(context_ptr);
         clear_field(context_ptr->field, context_ptr->field + context_ptr->row_size * context_ptr->col_size);
         put_snake(context_ptr->field, context_ptr->col_size, context_ptr->head);
+        put_food(context_ptr);
     }
     context_ptr->last_st = st;
 }
