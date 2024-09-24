@@ -29,6 +29,8 @@ typedef struct snake_context {
     bool is_paused, is_quit;
     snake_cell_t *field;
     snake_head_t *head;
+    double last_st, speed, level_up;
+    unsigned level;
 } snake_context_t;
 
 #endif

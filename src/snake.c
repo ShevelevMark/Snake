@@ -192,7 +192,7 @@ static void delete_tail(snake_head_t *head) {
     }
 }
 
-void* snake_make_context(unsigned row_size, unsigned col_size) {
+void* snake_make_context(unsigned row_size, unsigned col_size, double st, double initial_speed, double level_up) {
     void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_cell_t) * row_size * col_size);
     if (NULL != context_memory) {
         snake_context_t *context_ptr = (snake_context_t *)context_memory;
@@ -203,7 +203,11 @@ void* snake_make_context(unsigned row_size, unsigned col_size) {
         context_ptr->is_quit    = false;
         context_ptr->head       = (snake_head_t *)((unsigned char*)context_memory + sizeof(snake_context_t));
         context_ptr->field      = (snake_cell_t *)((unsigned char*)context_memory + sizeof(snake_context_t) + sizeof(snake_head_t));
-
+        context_ptr->last_st    = st;
+        context_ptr->speed      = initial_speed;
+        context_ptr->level_up   = level_up;
+        context_ptr->level      = 1;
+        
         context_ptr->head->col_pos = context_ptr->col_size / 2;
         context_ptr->head->row_pos = context_ptr->row_size / 2;
         context_ptr->head->dir = STOP;
@@ -246,11 +250,18 @@ void snake_draw(void *snake_context) {
     }
 }
 
-void snake_advance(void *snake_context) {
+void snake_advance(void *snake_context, double st) {
     snake_context_t *context_ptr = (snake_context_t *)snake_context;
-    move_snake(context_ptr);
-    clear_field(context_ptr->field, context_ptr->field + context_ptr->row_size * context_ptr->col_size);
-    put_snake(context_ptr->field, context_ptr->col_size, context_ptr->head); 
+
+    if (st - context_ptr->last_st < 1. / context_ptr->speed)
+        return;
+
+    if (!context_ptr->is_paused) {
+        move_snake(context_ptr);
+        clear_field(context_ptr->field, context_ptr->field + context_ptr->row_size * context_ptr->col_size);
+        put_snake(context_ptr->field, context_ptr->col_size, context_ptr->head);
+    }
+    context_ptr->last_st = st;
 }
 
 int snake_context_error(void *snake_context) {
@@ -261,9 +272,4 @@ int snake_context_error(void *snake_context) {
 bool snake_quit(void *snake_context) {
     snake_context_t *context_ptr = (snake_context_t *)snake_context;
     return context_ptr->is_quit;
-}
-
-bool snake_paused(void *snake_context) {
-    snake_context_t *context_ptr = (snake_context_t *)snake_context;
-    return context_ptr->is_paused;
 }

@@ -16,13 +16,11 @@ double double_st(void) {
 }
 
 int main() {
-    double period_s = 0.3, start_s, end_s; 
-
     double const refresh_rate = 30.;
     double const refresh_period_s = 1./refresh_rate;
     double refresh_start_s, refresh_end_s; 
 
-    void *snake_context = snake_make_context(20u, 20u);
+    void *snake_context = snake_make_context(20u, 20u, double_st(), 1.0, 1.0);
     if (NULL == snake_context) {
         printf("Can't start the game\n");
         return 1;
@@ -30,7 +28,7 @@ int main() {
 #ifdef _DEBUG
     unsigned frame_cnt = 0;
 #endif
-    start_s = end_s = refresh_start_s = refresh_end_s = double_st();
+    refresh_start_s = refresh_end_s = double_st();
     while (!snake_quit(snake_context)) {
         if (kbhit()) {
             int key = getch();
@@ -42,15 +40,9 @@ int main() {
                 break;
         }
         
-        end_s = double_st();
-        if (end_s - start_s > period_s) {
-            if (!snake_paused(snake_context))
-                snake_advance(snake_context);
-            if (0 != snake_context_error(snake_context))
+        snake_advance(snake_context, double_st());
+        if (0 != snake_context_error(snake_context))
                 break;
-            
-            start_s = double_st();
-        }
 
         refresh_end_s = double_st();
         if (refresh_end_s - refresh_start_s > refresh_period_s) {
