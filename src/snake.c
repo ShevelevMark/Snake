@@ -73,13 +73,13 @@ static void on_esc(snake_context_t *snake_context) {
  * Декларация функции увеличения размера змейки,
  * может быть неудачной, так как выделяется новая память
  * **/
-static int snake_grow(snake_head_t *head);
+static int snake_grow(snake_context_t *snake_context);
 
 /**
  * Функция действия для увеличения размера змейки
  * **/
 static void on_snake_grow(snake_context_t *snake_context) {
-    snake_context->errcode = snake_grow(snake_context->head);
+    snake_context->errcode = snake_grow(snake_context);
 }
 
 /**
@@ -136,10 +136,8 @@ static void swap_pos(unsigned *a, unsigned *b) {
     *b = tmp;
 }
 
-static void move_snake(snake_context_t *context_ptr) {
+static void move_head(snake_context_t *context_ptr) {
     snake_head_t *head = context_ptr->head;
-    unsigned prev_row = head->row_pos, prev_col = head->col_pos;
-    
     if (head->row_pos == 0 && directions_vec[head->dir].row < 0)
         head->row_pos = context_ptr->row_size - 1;
     else if (head->row_pos == context_ptr->row_size - 1 && directions_vec[head->dir].row > 0)
@@ -153,10 +151,14 @@ static void move_snake(snake_context_t *context_ptr) {
         head->col_pos = 0;
     else
         head->col_pos += directions_vec[head->dir].col;
-    
+}
 
+static void move_snake(snake_context_t *context_ptr) {
+    snake_head_t *head = context_ptr->head;
+    unsigned prev_row = head->row_pos, prev_col = head->col_pos;
+    move_head(context_ptr); 
+     
     snake_tail_t *tail = head->tail;
-
     while (NULL != tail) {
         swap_pos(&(tail->row_pos), &prev_row);
         swap_pos(&(tail->col_pos), &prev_col);
@@ -164,13 +166,15 @@ static void move_snake(snake_context_t *context_ptr) {
     }
 }
 
-static int snake_grow(snake_head_t *head) {
+static int snake_grow(snake_context_t *context_ptr) {
     snake_tail_t *new_neck = (snake_tail_t *)malloc(sizeof(snake_tail_t));
     if (NULL == new_neck)
         return -1;
 
+    snake_head_t *head = context_ptr->head;
     unsigned prev_row = head->row_pos, prev_col = head->col_pos;
-    head->row_pos += directions_vec[head->dir].row; head->col_pos += directions_vec[head->dir].col;
+    move_head(context_ptr);
+
     new_neck->tail = head->tail;
     head->tail = new_neck;
     new_neck->row_pos = prev_row;
