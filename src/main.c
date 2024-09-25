@@ -58,6 +58,8 @@ int main() {
 
     if (0 != snake_context_error(snake_context))
         printf("Internal snake application error: %d\n", snake_context_error(snake_context));
+    else
+        snake_print_exit(snake_context); // Задание 1.
     
     snake_delete_context(snake_context);
     return 0;

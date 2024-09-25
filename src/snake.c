@@ -5,6 +5,38 @@
 #include <stdbool.h>
 
 /**
+ * У змейки появилось несколько новых параметров, которые нужны для
+ * выполнения домашнего задания: 
+ * snake_context_t::level    : unsigned - уровень змейки (равен количеству съеденной еды)
+ * snake_context_t::speed    : double   - текущая скорость змейки (через каждый 1./speed секунд змейка смещается на один квадратик)
+ * snake_context_t::level_up : double   - множитель скорости (при увеличении уровня speed *= level_up)
+ * 
+ * Начальная скорость и коэффициент ускорения задаются при построении змейки snake_make_context
+ * **/
+
+/**
+ * Задание 1.
+ * Функция печати уровня
+ * Эта функция вызывается автоматически каждый раз при 
+ * отрисовке змейки.
+ * **/
+void snake_print_level(void *snake_context) {
+    snake_context_t *context_ptr = (snake_context_t*)snake_context;
+    printf("Current level %u\n", context_ptr->level);
+}
+
+/**
+ * Задание 1.
+ * Функция печати финального уровня.
+ * Она вызывается в функции main при успешном завершении 
+ * основного цикла.
+ * **/
+void snake_print_exit(void *snake_context) {
+    snake_context_t *context_ptr = (snake_context_t*)snake_context;
+    printf("Final result %u\n", context_ptr->level);
+}
+
+/**
  * Тип указателя на функцию для отклика действием на нажатие клавиши
  * **/
 typedef void (*snake_action_t) (snake_context_t *snake_context);
@@ -83,6 +115,15 @@ static void on_snake_grow(snake_context_t *snake_context) {
 }
 
 /**
+ * Задание 3.
+ * Для паузы используется буква P.
+ * Если кнопка нажата, то состояние паузы меняется на противопроложное.
+ * **/
+static void on_pause(snake_context_t *snake_context) {
+    snake_context->is_paused = !snake_context->is_paused;
+}
+
+/**
  * Функция для инициализации таблицы код-действие
  * **/
 static void snake_key_action_map_init() {
@@ -111,6 +152,9 @@ static void snake_key_action_map_init() {
     // G                 // g                 // П                   // п 
     key_action_map[71] = key_action_map[103] = key_action_map[143] = key_action_map[175] = on_snake_grow;
 #endif
+    // Задание 3.
+    // P                 // p                 // З                   // з 
+    key_action_map[80] = key_action_map[112]  = key_action_map[135] = key_action_map[167] = on_pause;
 }
 
 static snake_vector_t directions_vec[5] = { {0, 0}, {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
@@ -273,6 +317,7 @@ void snake_draw(void *snake_context) {
         }
         printf("\n");
     }
+    snake_print_level(snake_context);
 }
 
 void snake_advance(void *snake_context, double st) {
@@ -281,8 +326,18 @@ void snake_advance(void *snake_context, double st) {
     if (st - context_ptr->last_st < 1. / context_ptr->speed)
         return;
 
+    /**
+     * Задание 3.
+     * Если змейка на паузе, то мы пропускаем цикл обновления.
+     * **/
     if (!context_ptr->is_paused) {
         move_snake(context_ptr);
+        /**
+         * Задание 2.
+         * Если еда съедена, то уровень увеличивается
+         * и увеличивается скорость. Змейка растёт.
+         * Новая еда располагается в случайном месте.
+         * **/
         if (check_food(context_ptr)) {
             ++context_ptr->level;
             context_ptr->speed *= context_ptr->level_up;

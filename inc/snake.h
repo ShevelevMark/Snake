@@ -10,5 +10,6 @@ void snake_draw(void *snake_context);
 void snake_advance(void *snake_context, double time);
 int snake_context_error(void *snake_context);
 bool snake_quit(void *snake_context);
+void snake_print_exit(void *snake_context);
 
 #endif
