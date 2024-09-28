@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+static snake_vector_t directions_vec[5] = { {0, 0}, {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
+
 /**
  * У змейки появилось несколько новых параметров, которые нужны для
  * выполнения домашнего задания: 
@@ -52,22 +54,22 @@ static snake_action_t key_action_map[256];
  * **/
 bool check_direction(snake_context_t *snake_context, snake_direction_t dir) {
     /**
-     * Если змейка стоит или мы хотим её остановить, то это 
-     * можно сделать для любого направления.
-     * Если мы пытаемся установить то же самое направление,
-     * в котором уже движется змейка, то это можно сделать.
+     * Если у змейки есть только голова или мы хотим её остановить,
+     * разрешим в ей остановиться или изменить направление на любое.
      */
-    if (STOP == dir || STOP == snake_context->head->dir || dir == snake_context->head->dir) return true;
+    if (STOP == dir || NULL == snake_context->head->tail) return true;
 
     /**
-     * Тип направления определён следующим образом в snake_context.h
-     * typedef enum snake_direction {STOP = 0, UP = 1, RIGHT = 2, DOWN = 3, LEFT = 4} snake_direction_t;
-     * Если чётность устанавливаемого направления не совпадает с чётностью текущего, то оно разрешено
-     */
-    if (dir % 2 != snake_context->head->dir % 2) return true;
+     * Вычислим направление от хвоста к голове, не прибегая к привидению 
+     * беззнакового типа к знаковому. Полученное направление запрещено.
+     * **/
+    int row_dir = 0, col_dir = 0;
+    if (snake_context->head->row_pos > snake_context->head->tail->row_pos) row_dir = -1;
+    if (snake_context->head->row_pos < snake_context->head->tail->row_pos) row_dir = 1;
+    if (snake_context->head->col_pos > snake_context->head->tail->col_pos) col_dir = -1;
+    if (snake_context->head->col_pos < snake_context->head->tail->col_pos) col_dir = 1;
 
-    /* в остальных случая неверное направление */
-    return false;
+    return !(row_dir == directions_vec[dir].row && col_dir == directions_vec[dir].col);
 }
 
 /**
@@ -156,8 +158,6 @@ static void snake_key_action_map_init() {
     // P                 // p                 // З                   // з 
     key_action_map[80] = key_action_map[112]  = key_action_map[135] = key_action_map[167] = on_pause;
 }
-
-static snake_vector_t directions_vec[5] = { {0, 0}, {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
 
 static void clear_field(snake_cell_t *begin, snake_cell_t *end) {
     for (snake_cell_t *it = begin; it != end; ++it)
