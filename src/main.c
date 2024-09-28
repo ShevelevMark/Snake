@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <snake.h>
 #include <Windows.h>
+#include <time.h>
 
 double double_st(void) {
     SYSTEMTIME st;
@@ -20,7 +21,7 @@ int main() {
     double const refresh_period_s = 1./refresh_rate;
     double refresh_start_s, refresh_end_s; 
 
-    void *snake_context = snake_make_context(20u, 20u, double_st(), 1.0, 1.0);
+    void *snake_context = snake_make_context(20u, 20u, double_st(), 1.0, 2.0, time(NULL));
     if (NULL == snake_context) {
         printf("Can't start the game\n");
         return 1;
@@ -57,6 +58,8 @@ int main() {
 
     if (0 != snake_context_error(snake_context))
         printf("Internal snake application error: %d\n", snake_context_error(snake_context));
+    else
+        snake_print_exit(snake_context); // Задание 1.
     
     snake_delete_context(snake_context);
     return 0;

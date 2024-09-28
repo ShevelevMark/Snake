@@ -5,6 +5,38 @@
 #include <stdbool.h>
 
 /**
+ * У змейки появилось несколько новых параметров, которые нужны для
+ * выполнения домашнего задания: 
+ * snake_context_t::level    : unsigned - уровень змейки (равен количеству съеденной еды)
+ * snake_context_t::speed    : double   - текущая скорость змейки (через каждый 1./speed секунд змейка смещается на один квадратик)
+ * snake_context_t::level_up : double   - множитель скорости (при увеличении уровня speed *= level_up)
+ * 
+ * Начальная скорость и коэффициент ускорения задаются при построении змейки snake_make_context
+ * **/
+
+/**
+ * Задание 1.
+ * Функция печати уровня
+ * Эта функция вызывается автоматически каждый раз при 
+ * отрисовке змейки.
+ * **/
+void snake_print_level(void *snake_context) {
+    snake_context_t *context_ptr = (snake_context_t*)snake_context;
+    printf("Current level %u\n", context_ptr->level);
+}
+
+/**
+ * Задание 1.
+ * Функция печати финального уровня.
+ * Она вызывается в функции main при успешном завершении 
+ * основного цикла.
+ * **/
+void snake_print_exit(void *snake_context) {
+    snake_context_t *context_ptr = (snake_context_t*)snake_context;
+    printf("Final result %u\n", context_ptr->level);
+}
+
+/**
  * Тип указателя на функцию для отклика действием на нажатие клавиши
  * **/
 typedef void (*snake_action_t) (snake_context_t *snake_context);
@@ -83,6 +115,15 @@ static void on_snake_grow(snake_context_t *snake_context) {
 }
 
 /**
+ * Задание 3.
+ * Для паузы используется буква P.
+ * Если кнопка нажата, то состояние паузы меняется на противопроложное.
+ * **/
+static void on_pause(snake_context_t *snake_context) {
+    snake_context->is_paused = !snake_context->is_paused;
+}
+
+/**
  * Функция для инициализации таблицы код-действие
  * **/
 static void snake_key_action_map_init() {
@@ -111,6 +152,9 @@ static void snake_key_action_map_init() {
     // G                 // g                 // П                   // п 
     key_action_map[71] = key_action_map[103] = key_action_map[143] = key_action_map[175] = on_snake_grow;
 #endif
+    // Задание 3.
+    // P                 // p                 // З                   // з 
+    key_action_map[80] = key_action_map[112]  = key_action_map[135] = key_action_map[167] = on_pause;
 }
 
 static snake_vector_t directions_vec[5] = { {0, 0}, {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
@@ -128,6 +172,10 @@ static void put_snake(snake_cell_t *field, unsigned col_size, snake_head_t *head
         field[tail->row_pos * col_size + tail->col_pos] = TAIL;
         tail = tail->tail;
     }
+}
+
+static void put_food(snake_context_t *context_ptr) {
+    context_ptr->field[context_ptr->food->row * context_ptr->col_size + context_ptr->food->col] = FOOD;
 }
 
 static void swap_pos(unsigned *a, unsigned *b) {
@@ -192,8 +240,24 @@ static void delete_tail(snake_head_t *head) {
     }
 }
 
-void* snake_make_context(unsigned row_size, unsigned col_size, double st, double initial_speed, double level_up) {
-    void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_cell_t) * row_size * col_size);
+
+static void random_init(unsigned seed) {
+    srand(seed);
+}
+
+static void random_food(snake_context_t *context_ptr) {
+    context_ptr->food->col = rand() % context_ptr->col_size;
+    context_ptr->food->row = rand() % context_ptr->row_size;
+}
+
+static bool check_food(snake_context_t *context_ptr) {
+    return 
+        context_ptr->head->col_pos == context_ptr->food->col 
+        && context_ptr->head->row_pos == context_ptr->food->row;
+}
+
+void* snake_make_context(unsigned row_size, unsigned col_size, double st, double initial_speed, double level_up, unsigned random_seed) {
+    void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_food_t) + sizeof(snake_cell_t) * row_size * col_size);
     if (NULL != context_memory) {
         snake_context_t *context_ptr = (snake_context_t *)context_memory;
         context_ptr->row_size   = row_size;
@@ -202,7 +266,8 @@ void* snake_make_context(unsigned row_size, unsigned col_size, double st, double
         context_ptr->is_paused  = false;
         context_ptr->is_quit    = false;
         context_ptr->head       = (snake_head_t *)((unsigned char*)context_memory + sizeof(snake_context_t));
-        context_ptr->field      = (snake_cell_t *)((unsigned char*)context_memory + sizeof(snake_context_t) + sizeof(snake_head_t));
+        context_ptr->food       = (snake_food_t *)((unsigned char*)context_memory + sizeof(snake_context_t) + sizeof(snake_head_t));
+        context_ptr->field      = (snake_cell_t *)((unsigned char*)context_memory + sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_food_t));
         context_ptr->last_st    = st;
         context_ptr->speed      = initial_speed;
         context_ptr->level_up   = level_up;
@@ -212,11 +277,14 @@ void* snake_make_context(unsigned row_size, unsigned col_size, double st, double
         context_ptr->head->row_pos = context_ptr->row_size / 2;
         context_ptr->head->dir = STOP;
         context_ptr->head->tail = NULL;
-
+        
+        snake_key_action_map_init();
+        random_init(random_seed);
+        random_food(context_ptr);
+        
         clear_field(context_ptr->field, context_ptr->field + row_size * col_size);
         put_snake(context_ptr->field, context_ptr->col_size, context_ptr->head);
-
-        snake_key_action_map_init();
+        put_food(context_ptr);
     }
     return context_memory;
 }
@@ -243,11 +311,13 @@ void snake_draw(void *snake_context) {
                 case EMPTY: printf("."); break;
                 case HEAD: printf("@"); break;
                 case TAIL: printf("*"); break;
+                case FOOD: printf("$"); break;
             }
             printf(" ");
         }
         printf("\n");
     }
+    snake_print_level(snake_context);
 }
 
 void snake_advance(void *snake_context, double st) {
@@ -256,10 +326,28 @@ void snake_advance(void *snake_context, double st) {
     if (st - context_ptr->last_st < 1. / context_ptr->speed)
         return;
 
+    /**
+     * Задание 3.
+     * Если змейка на паузе, то мы пропускаем цикл обновления.
+     * **/
     if (!context_ptr->is_paused) {
         move_snake(context_ptr);
+        /**
+         * Задание 2.
+         * Если еда съедена, то уровень увеличивается
+         * и увеличивается скорость. Змейка растёт.
+         * Новая еда располагается в случайном месте.
+         * **/
+        if (check_food(context_ptr)) {
+            ++context_ptr->level;
+            context_ptr->speed *= context_ptr->level_up;
+            snake_grow(context_ptr);
+            random_food(context_ptr); 
+        }
+        
         clear_field(context_ptr->field, context_ptr->field + context_ptr->row_size * context_ptr->col_size);
         put_snake(context_ptr->field, context_ptr->col_size, context_ptr->head);
+        put_food(context_ptr);
     }
     context_ptr->last_st = st;
 }
