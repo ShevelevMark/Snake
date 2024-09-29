@@ -28,6 +28,7 @@ typedef struct snake_food {
 } snake_food_t;
 
 typedef struct snake_context {
+    int color_scheme[4]; // 4 цвета для четырёх типов ячеек на поле: 0-EMPTY, 1-HEAD, 2-TAIL, 3-FOOD
     unsigned row_size, col_size;
     int errcode;
     bool is_paused, is_quit;
