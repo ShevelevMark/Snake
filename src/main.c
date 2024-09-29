@@ -17,11 +17,17 @@ double double_st(void) {
 }
 
 int main() {
-    double const refresh_rate = 30.;
+    double const refresh_rate = 25.;
     double const refresh_period_s = 1./refresh_rate;
     double refresh_start_s, refresh_end_s; 
+    int color_scheme[4]  = { // этот массив задаёт "цветовую схему" - набор из 4 цветов
+        BACKGROUND_GREEN, // тёмно-зелёный с чёрным текстом 
+        BACKGROUND_GREEN | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY, // тёмно-зелёный с белым текстом
+        BACKGROUND_GREEN | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+        FOREGROUND_BLUE | FOREGROUND_INTENSITY //ярко-синий на чёрном фоне
+    };
 
-    void *snake_context = snake_make_context(20u, 20u, double_st(), 1.0, 2.0, time(NULL));
+    void *snake_context = snake_make_context(20u, 20u, color_scheme, double_st(), 1.0, 2.0, time(NULL));
     if (NULL == snake_context) {
         printf("Can't start the game\n");
         return 1;

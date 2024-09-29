@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
+#include <Windows.h>
 
 static snake_vector_t directions_vec[5] = { {0, 0}, {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
 
@@ -256,12 +258,13 @@ static bool check_food(snake_context_t *context_ptr) {
         && context_ptr->head->row_pos == context_ptr->food->row;
 }
 
-void* snake_make_context(unsigned row_size, unsigned col_size, double st, double initial_speed, double level_up, unsigned random_seed) {
+void* snake_make_context(unsigned row_size, unsigned col_size, int color_scheme[4], double st, double initial_speed, double level_up, unsigned random_seed) {
     void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_food_t) + sizeof(snake_cell_t) * row_size * col_size);
     if (NULL != context_memory) {
         snake_context_t *context_ptr = (snake_context_t *)context_memory;
         context_ptr->row_size   = row_size;
         context_ptr->col_size   = col_size;
+        memcpy(context_ptr->color_scheme, color_scheme, 4 * sizeof(int)); // копируем цвета во внутреннюю память структуры
         context_ptr->errcode    = 0;
         context_ptr->is_paused  = false;
         context_ptr->is_quit    = false;
@@ -304,19 +307,25 @@ void snake_key_process(int key, void *snake_context) {
 }
 
 void snake_draw(void *snake_context) {
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO prev_info;
+    GetConsoleScreenBufferInfo(hStdOut,&prev_info);
+
     snake_context_t *context_ptr = (snake_context_t *)snake_context;
     for (unsigned row_idx = 0; row_idx != context_ptr->row_size; ++row_idx) {
         for (unsigned col_idx = 0; col_idx != context_ptr->col_size; ++col_idx) {
             switch(context_ptr->field[row_idx * context_ptr->col_size + col_idx]) {
-                case EMPTY: printf("."); break;
-                case HEAD: printf("@"); break;
-                case TAIL: printf("*"); break;
-                case FOOD: printf("$"); break;
+                case EMPTY: SetConsoleTextAttribute(hStdOut, context_ptr->color_scheme[EMPTY]); printf("."); break;
+                case HEAD:  SetConsoleTextAttribute(hStdOut, context_ptr->color_scheme[HEAD]);  printf("@"); break;
+                case TAIL:  SetConsoleTextAttribute(hStdOut, context_ptr->color_scheme[TAIL]);  printf("*"); break;
+                case FOOD:  SetConsoleTextAttribute(hStdOut, context_ptr->color_scheme[FOOD]);  printf("$"); break;
             }
+            SetConsoleTextAttribute(hStdOut, context_ptr->color_scheme[EMPTY]); // пробел между ячейками заполняем цветом фона
             printf(" ");
         }
         printf("\n");
     }
+    SetConsoleTextAttribute(hStdOut, prev_info.wAttributes); // возвращаем изначальные настройки цвета для текстового вывода
     snake_print_level(snake_context);
 }
 
