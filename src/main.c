@@ -57,16 +57,10 @@ int d_scheme[4] = {
     BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY
 };
 
-int main() {
-    snake_init_t init;
-    init.row_size = 20u;
-    init.col_size = 30u;
-    memcpy(init.color_scheme, d_scheme, 4 * sizeof(int));
-    init.is_ai = true;
-    init.speed = 2.0;
-    init.accel = 1.2;
-    init.random_seed = time(NULL);
+snake_init_t menu(void);
 
+int main() {
+    snake_init_t init = menu();
     void *snake_context = snake_make_context(init.row_size, init.col_size, init.color_scheme, init.is_ai, double_st(), init.speed, init.accel, init.random_seed);
     if (NULL == snake_context) {
         printf("Can't start the game\n");
@@ -123,4 +117,10 @@ int main() {
     
     snake_delete_context(snake_context);
     return 0;
+}
+
+snake_init_t menu(void) {
+    snake_init_t init = {20u, 30u, {0, 0, 0, 0}, true, 2.0, 1.2, time(NULL)};
+    memcpy(init.color_scheme, d_scheme, 4 * sizeof(int));
+    return init;
 }
