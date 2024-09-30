@@ -16,6 +16,12 @@ double double_st(void) {
         (double)st.wMilliseconds / 1000.0;
 }
 
+typedef struct snake_init {
+    unsigned row_size, col_size;
+    int color_scheme[4];
+    bool is_ai;
+};
+
 int main() {
     double const refresh_rate = 25.;
     double const refresh_period_s = 1./refresh_rate;
