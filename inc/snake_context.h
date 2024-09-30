@@ -16,6 +16,7 @@ typedef struct snake_head {
     unsigned row_pos, col_pos;
     snake_direction_t dir;
     struct snake_tail *tail;
+    bool is_ai;
 } snake_head_t;
 
 typedef struct snake_tail {

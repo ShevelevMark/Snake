@@ -79,22 +79,22 @@ bool check_direction(snake_context_t *snake_context, snake_direction_t dir) {
  * змейки
  * **/
 static void on_move_up(snake_context_t *snake_context) {
-    if (!check_direction(snake_context, UP)) return;
+    if (!check_direction(snake_context, UP) || snake_context->head->is_ai) return;
     snake_context->head->dir = UP;
 }
 
 static void on_move_right(snake_context_t *snake_context) {
-    if (!check_direction(snake_context, RIGHT)) return;
+    if (!check_direction(snake_context, RIGHT) || snake_context->head->is_ai) return;
     snake_context->head->dir = RIGHT;
 }
 
 static void on_move_down(snake_context_t *snake_context) {
-    if (!check_direction(snake_context, DOWN)) return;
+    if (!check_direction(snake_context, DOWN) || snake_context->head->is_ai) return;
     snake_context->head->dir = DOWN;
 }
 
 static void on_move_left(snake_context_t *snake_context) {
-    if (!check_direction(snake_context, LEFT)) return;
+    if (!check_direction(snake_context, LEFT) || snake_context->head->is_ai) return;
     snake_context->head->dir = LEFT;
 }
 
@@ -258,7 +258,7 @@ static bool check_food(snake_context_t *context_ptr) {
         && context_ptr->head->row_pos == context_ptr->food->row;
 }
 
-void* snake_make_context(unsigned row_size, unsigned col_size, int color_scheme[4], double st, double initial_speed, double level_up, unsigned random_seed) {
+void* snake_make_context(unsigned row_size, unsigned col_size, int color_scheme[4], bool is_ai, double st, double initial_speed, double level_up, unsigned random_seed) {
     void* context_memory = malloc(sizeof(snake_context_t) + sizeof(snake_head_t) + sizeof(snake_food_t) + sizeof(snake_cell_t) * row_size * col_size);
     if (NULL != context_memory) {
         snake_context_t *context_ptr = (snake_context_t *)context_memory;
@@ -280,6 +280,7 @@ void* snake_make_context(unsigned row_size, unsigned col_size, int color_scheme[
         context_ptr->head->row_pos = context_ptr->row_size / 2;
         context_ptr->head->dir = STOP;
         context_ptr->head->tail = NULL;
+        context_ptr->head->is_ai = is_ai;
         
         snake_key_action_map_init();
         random_init(random_seed);
@@ -335,18 +336,27 @@ void snake_advance(void *snake_context, double st) {
     if (st - context_ptr->last_st < 1. / context_ptr->speed)
         return;
 
-    /**
-     * Задание 3.
-     * Если змейка на паузе, то мы пропускаем цикл обновления.
-     * **/
     if (!context_ptr->is_paused) {
-        move_snake(context_ptr);
         /**
-         * Задание 2.
-         * Если еда съедена, то уровень увеличивается
-         * и увеличивается скорость. Змейка растёт.
-         * Новая еда располагается в случайном месте.
+         * Если змейка управляется втоматически, то она пытается выбрать направление,
+         * чтобы поровняться с едой сначала по строке, а потом по столбцу.
+         * Змейка НЕ выбирает кратчайший путь на торе.
          * **/
+        if (context_ptr->head->is_ai) {
+            snake_direction_t dir = STOP;
+            if (context_ptr->head->row_pos != context_ptr->food->row) {
+                // если направление, в котором хотим идти, запрещено, попытаемся сместиться в сторону для разворота
+                if (context_ptr->head->row_pos > context_ptr->food->row) dir = check_direction(context_ptr, UP) ? UP : LEFT;
+                else if (context_ptr->head->row_pos < context_ptr->food->row) dir = check_direction(context_ptr, DOWN) ? DOWN : RIGHT;
+            } else {
+                if (context_ptr->head->col_pos > context_ptr->food->col) dir = check_direction(context_ptr, LEFT) ? LEFT : UP;
+                else if (context_ptr->head->col_pos < context_ptr->food->col) dir = check_direction(context_ptr, RIGHT) ? RIGHT : DOWN;
+            }
+            context_ptr->head->dir = dir;
+        }
+        
+        move_snake(context_ptr);
+        
         if (check_food(context_ptr)) {
             ++context_ptr->level;
             context_ptr->speed *= context_ptr->level_up;
