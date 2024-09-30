@@ -340,10 +340,12 @@ void snake_advance(void *snake_context, double st) {
         /**
          * Если змейка управляется втоматически, то она пытается выбрать направление,
          * чтобы поровняться с едой сначала по строке, а потом по столбцу.
+         * Змейка НЕ выбирает кратчайший путь на торе.
          * **/
         if (context_ptr->head->is_ai) {
             snake_direction_t dir = STOP;
             if (context_ptr->head->row_pos != context_ptr->food->row) {
+                // если направление, в котором хотим идти, запрещено, попытаемся сместиться в сторону для разворота
                 if (context_ptr->head->row_pos > context_ptr->food->row) dir = check_direction(context_ptr, UP) ? UP : LEFT;
                 else if (context_ptr->head->row_pos < context_ptr->food->row) dir = check_direction(context_ptr, DOWN) ? DOWN : RIGHT;
             } else {
