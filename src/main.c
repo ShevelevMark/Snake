@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <conio.h>
 #include <snake.h>
 #include <Windows.h>
@@ -26,8 +27,9 @@ int main() {
         BACKGROUND_GREEN | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
         FOREGROUND_BLUE | FOREGROUND_INTENSITY //ярко-синий на чёрном фоне
     };
+    bool is_ai = true;
 
-    void *snake_context = snake_make_context(20u, 20u, color_scheme, double_st(), 1.0, 2.0, time(NULL));
+    void *snake_context = snake_make_context(20u, 20u, color_scheme, is_ai, double_st(), 1.0, 2.0, time(NULL));
     if (NULL == snake_context) {
         printf("Can't start the game\n");
         return 1;
