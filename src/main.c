@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <conio.h>
 #include <snake.h>
 #include <Windows.h>
@@ -21,29 +22,53 @@ typedef struct snake_init {
     unsigned row_size, col_size;
     int color_scheme[4];
     bool is_ai;
+    double speed, accel;
+    unsigned random_seed;
+} snake_init_t;
+
+/**
+ * Набор предопределённых цветовых схем
+ * **/
+int gw_scheme[4] = {
+    BACKGROUND_GREEN,
+    BACKGROUND_GREEN | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+    BACKGROUND_GREEN | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+    FOREGROUND_BLUE | FOREGROUND_INTENSITY 
 };
 
 int main() {
-    double const refresh_rate = 25.;
-    double const refresh_period_s = 1./refresh_rate;
-    double refresh_start_s, refresh_end_s; 
-    int color_scheme[4]  = { // этот массив задаёт "цветовую схему" - набор из 4 цветов
-        BACKGROUND_GREEN, // тёмно-зелёный с чёрным текстом 
-        BACKGROUND_GREEN | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY, // тёмно-зелёный с белым текстом
-        BACKGROUND_GREEN | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
-        FOREGROUND_BLUE | FOREGROUND_INTENSITY //ярко-синий на чёрном фоне
-    };
-    bool is_ai = true;
+    snake_init_t init;
+    init.row_size = 20u;
+    init.col_size = 30u;
+    memcpy(init.color_scheme, gw_scheme, 4 * sizeof(int));
+    init.is_ai = true;
+    init.speed = 2.0;
+    init.accel = 1.2;
+    init.random_seed = time(NULL);
 
-    void *snake_context = snake_make_context(20u, 20u, color_scheme, is_ai, double_st(), 2.0, 1.2, time(NULL));
+    void *snake_context = snake_make_context(init.row_size, init.col_size, init.color_scheme, init.is_ai, double_st(), init.speed, init.accel, init.random_seed);
     if (NULL == snake_context) {
         printf("Can't start the game\n");
         return 1;
     }
+
 #ifdef _DEBUG
     unsigned frame_cnt = 0;
 #endif
+    /**
+     * Эти данные необходимы для относительно стабильной 
+     * скорости обновления изображения независимо от движения
+     * змейки.
+     * **/
+    double const refresh_rate = 25.;
+    double const refresh_period_s = 1./refresh_rate;
+    double refresh_start_s, refresh_end_s;
     refresh_start_s = refresh_end_s = double_st();
+
+    /**
+     * Основной цикл, который вызвает функции отрисовки и
+     * обновления состоияния.
+     * **/
     while (!snake_quit(snake_context)) {
         if (kbhit()) {
             int key = getch();
