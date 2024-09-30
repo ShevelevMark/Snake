@@ -29,7 +29,7 @@ int main() {
     };
     bool is_ai = true;
 
-    void *snake_context = snake_make_context(20u, 20u, color_scheme, is_ai, double_st(), 1.0, 2.0, time(NULL));
+    void *snake_context = snake_make_context(20u, 20u, color_scheme, is_ai, double_st(), 2.0, 1.2, time(NULL));
     if (NULL == snake_context) {
         printf("Can't start the game\n");
         return 1;

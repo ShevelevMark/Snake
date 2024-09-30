@@ -336,18 +336,25 @@ void snake_advance(void *snake_context, double st) {
     if (st - context_ptr->last_st < 1. / context_ptr->speed)
         return;
 
-    /**
-     * Задание 3.
-     * Если змейка на паузе, то мы пропускаем цикл обновления.
-     * **/
     if (!context_ptr->is_paused) {
-        move_snake(context_ptr);
         /**
-         * Задание 2.
-         * Если еда съедена, то уровень увеличивается
-         * и увеличивается скорость. Змейка растёт.
-         * Новая еда располагается в случайном месте.
+         * Если змейка управляется втоматически, то она пытается выбрать направление,
+         * чтобы поровняться с едой сначала по строке, а потом по столбцу.
          * **/
+        if (context_ptr->head->is_ai) {
+            snake_direction_t dir = STOP;
+            if (context_ptr->head->row_pos != context_ptr->food->row) {
+                if (context_ptr->head->row_pos > context_ptr->food->row) dir = check_direction(context_ptr, UP) ? UP : LEFT;
+                else if (context_ptr->head->row_pos < context_ptr->food->row) dir = check_direction(context_ptr, DOWN) ? DOWN : RIGHT;
+            } else {
+                if (context_ptr->head->col_pos > context_ptr->food->col) dir = check_direction(context_ptr, LEFT) ? LEFT : UP;
+                else if (context_ptr->head->col_pos < context_ptr->food->col) dir = check_direction(context_ptr, RIGHT) ? RIGHT : DOWN;
+            }
+            context_ptr->head->dir = dir;
+        }
+        
+        move_snake(context_ptr);
+        
         if (check_food(context_ptr)) {
             ++context_ptr->level;
             context_ptr->speed *= context_ptr->level_up;
