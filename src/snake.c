@@ -330,6 +330,12 @@ void snake_draw(void *snake_context) {
     snake_print_level(snake_context);
 }
 
+bool is_crush(snake_head_t *head) {
+    for (snake_tail_t *tail = head->tail; NULL != tail; tail = tail->tail)
+        if (head->row_pos == tail->row_pos && head->col_pos == tail->col_pos) return true;
+    return false;
+}
+
 void snake_advance(void *snake_context, double st) {
     snake_context_t *context_ptr = (snake_context_t *)snake_context;
 
@@ -337,6 +343,10 @@ void snake_advance(void *snake_context, double st) {
         return;
 
     if (!context_ptr->is_paused) {
+        if (is_crush(context_ptr->head)) {
+            context_ptr->is_quit = true;
+            return;
+        }
         /**
          * Если змейка управляется втоматически, то она пытается выбрать направление,
          * чтобы поровняться с едой сначала по строке, а потом по столбцу.
